@@ -27,6 +27,12 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
     public $className;
 
     /**
+     * Updates Record if $uniqueAttributes record exists
+     * @var boolean
+     */
+    public $updateRecord;
+
+    /**
      * @throws Exception
      */
     public function __construct() {
@@ -73,9 +79,19 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                         $model->setAttribute($config['attribute'], $value);
                     }
                 }
-                //Check if model is unique and saved with success
-                if ($this->isActiveRecordUnique($uniqueAttributes) && $model->save()) {
-                    $importedPks[] = $model->primaryKey;
+                $updateRecord = isset($this->updateRecord) && count($uniqueAttributes) > 0;
+                if ($updateRecord) {
+                    if (($record = $this->loadActiveRecordIfExists($uniqueAttributes)) !== null) {
+                        $record->attributes = $model->attributes;
+                        if ($record->save()) {
+                            $importedPks[] = $record->primaryKey;
+                        }
+                    }
+                } else {
+                    //Check if model is unique and saved with success
+                    if ($this->isActiveRecordUnique($uniqueAttributes) && $model->save()) {
+                        $importedPks[] = $model->primaryKey;
+                    }
                 }
             }
         }
@@ -94,4 +110,13 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                 !$class::find()->where($attributes)->exists();
     }
 
+    /**
+     * @param $attributes
+     * @return array|null|\yii\db\ActiveRecord
+     */
+    private function loadActiveRecordIfExists($attributes) {
+        /* @var $class \yii\db\ActiveRecord */
+        $class = $this->className;
+        return $class::find()->where($attributes)->one();
+    }
 }
