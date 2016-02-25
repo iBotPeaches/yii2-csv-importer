@@ -85,13 +85,13 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                         $record->attributes = $model->attributes;
                         if ($record->save()) {
                             $importedPks[] = $record->primaryKey;
+                            continue;
                         }
                     }
-                } else {
-                    //Check if model is unique and saved with success
-                    if ($this->isActiveRecordUnique($uniqueAttributes) && $model->save()) {
-                        $importedPks[] = $model->primaryKey;
-                    }
+                }
+                //Check if model is unique and saved with success
+                if ($this->isActiveRecordUnique($uniqueAttributes) && $model->save()) {
+                    $importedPks[] = $model->primaryKey;
                 }
             }
         }
