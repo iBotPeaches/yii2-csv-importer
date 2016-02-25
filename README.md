@@ -102,6 +102,28 @@ $primaryKeys = $importer->import(new ARImportStrategy([
     ],
 ]));
 
+//Import Active Records, Updating where records already exist.
+//Record is located via attributes marked with unique flag.
+$primaryKeys = $importer->import(new ARImportStrategy([
+    'className' => BusinessType::className(),
+    'configs' => [
+        [
+            'attribute' => 'name',
+            'value' => function($line) {
+                return $line[2];
+            },
+            'unique' => true
+        ],
+        [
+            'attribute' => 'description',
+            'value' => function($line) {
+                return $line[3];
+            },
+        ],
+        'updateRecord' => true
+    ],
+]));
+
 //You can use the primary key list for the next import of related data.
 //The order of primary key items will be the same as in csv file.
 $importer->import(new MultipleImportStrategy([
