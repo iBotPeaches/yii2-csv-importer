@@ -33,6 +33,12 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
     public $updateRecord;
 
     /**
+     * Runs function after record inserted. With $line and $model
+     * @var callable
+     */
+    public $insertedFunction;
+
+    /**
      * @throws Exception
      */
     public function __construct() {
@@ -57,6 +63,7 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
      * Will multiple import data into table
      * @param array $data CSV data passed by reference to save memory.
      * @return array Primary keys of imported data
+     * @throws Exception
      */
     public function import(&$data) {
         $importedPks = [];
@@ -85,6 +92,9 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                         $record->attributes = $model->attributes;
                         if ($record->save()) {
                             $importedPks[] = $record->primaryKey;
+                            if (isset($this->insertedFunction) && call_user_func($this->insertedFunction, $row, $record) !== true) {
+                                throw new Exception('Post Insert function failed.');
+                            }
                             continue;
                         }
                     }
@@ -92,6 +102,9 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                 //Check if model is unique and saved with success
                 if ($this->isActiveRecordUnique($uniqueAttributes) && $model->save()) {
                     $importedPks[] = $model->primaryKey;
+                    if (isset($this->insertedFunction) && call_user_func($this->insertedFunction, $row, $model) !== true) {
+                        throw new Exception('Post Insert function failed.');
+                    }
                 }
             }
         }
