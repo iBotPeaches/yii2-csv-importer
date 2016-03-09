@@ -39,6 +39,13 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
     public $insertedFunction;
 
     /**
+     * Runs function after model creation, before population.
+     * Allows setting model variables.
+     * @var callable
+     */
+    public $createdFunction;
+
+    /**
      * @throws Exception
      */
     public function __construct() {
@@ -72,6 +79,9 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
             if (!$skipImport) {
                 /* @var $model \yii\db\ActiveRecord */
                 $model = new $this->className;
+                if (isset($this->createdFunction) && call_user_func($this->createdFunction, $model) !== true) {
+                    throw new Exception('createdFunction function threw an exception');
+                }
                 $uniqueAttributes = [];
                 foreach ($this->configs as $config) {
                     if (isset($config['attribute']) && $model->hasAttribute($config['attribute'])) {
