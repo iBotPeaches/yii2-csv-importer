@@ -85,7 +85,15 @@ class ARImportStrategy extends BaseImportStrategy implements ImportInterface {
                 $uniqueAttributes = [];
                 foreach ($this->configs as $config) {
                     if (isset($config['attribute']) && $model->hasAttribute($config['attribute'])) {
-                        $value = call_user_func($config['value'], $row);
+
+                        // If value is null, then we adding our own unique constraint that has been previously
+                        // set in createdFunction callable. So just set that value to the model again to satisfy
+                        // $uniqueAttributes.
+                        if ($config['value'] !== null) {
+                            $value = call_user_func($config['value'], $row);
+                        } else {
+                            $value = $model->getAttribute($config['attribute']);
+                        }
 
                         //Create array of unique attributes
                         if (isset($config['unique']) && $config['unique']) {
